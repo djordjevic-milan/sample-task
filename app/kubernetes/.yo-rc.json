@@ -1,0 +1,21 @@
+{
+  "generator-jhipster": {
+    "appsFolders": ["myApp2"],
+    "dbRandomPassword": "ecf139ec5b0895300a8cffefd9921c4d1750528e879192ea9dc7e33efaeb",
+    "deploymentApplicationType": "microservice",
+    "directoryPath": "../",
+    "dockerPushCommand": "docker push",
+    "dockerRepositoryName": "",
+    "ingressDomain": null,
+    "ingressType": null,
+    "istio": false,
+    "jhipsterVersion": "8.10.0",
+    "jwtSecretKey": "MTk5OGI5NmMwOWY4NWVjZjVmN2YzM2IwYmZlMzNjNmZhNWU1NzIwZWM5NGU0NDRiZDIzZTY3MjZkOGFjNWI3OGRjNDc5ZDQ1NWFiYTlhYWE2NjZmZGY3ODM4NWExNGRlOGE0YQ==",
+    "kubernetesNamespace": "default",
+    "kubernetesServiceType": "LoadBalancer",
+    "kubernetesStorageClassName": null,
+    "kubernetesUseDynamicStorage": false,
+    "monitoring": "no",
+    "serviceDiscoveryType": "consul"
+  }
+}
