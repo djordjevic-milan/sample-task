@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: react-app
+data:
+  MYSQL_INITDB_SKIP_TZINFO: "yes"

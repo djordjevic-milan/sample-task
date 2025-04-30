@@ -1,0 +1,31 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: react-app-ingress
+  namespace: react-app
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+spec:
+  tls:
+    - hosts:
+        - react-app.local
+      secretName: react-app-tls
+  rules:
+    - host: react-app.local
+      http:
+        paths:
+          - path: /static
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3001
+          - path: /user
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 3000
