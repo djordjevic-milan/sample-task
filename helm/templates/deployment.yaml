@@ -1,0 +1,55 @@
+{{- range .Values.services }}
+  {{- if .enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}-{{ .name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  replicas: {{ .replicas }}
+  selector:
+    matchLabels:
+      app: {{ $.Release.Name }}-{{ .name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $.Release.Name }}-{{ .name }}
+    spec:
+      containers:
+        - name: {{ $.Release.Name }}-{{ .name }}
+          image: {{ .image }}
+          ports:
+            - containerPort: {{ .port }}
+          env:
+          {{- $serviceName := .name }}
+          {{- range .env }}
+          - name: {{ .name }}
+            valueFrom:
+              configMapKeyRef:
+                name: {{ $.Release.Name }}-{{ $serviceName }}-config
+                key: {{ .name }}
+          {{- end }}
+          {{- range .secret }}
+          - name: {{ .key }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ $.Release.Name }}-{{ $serviceName }}-secret
+                key: {{ .key }}
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: {{ .probes.readiness.httpGet.path }}
+              port: {{ .probes.readiness.httpGet.port }}
+            initialDelaySeconds: {{ .probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .probes.readiness.periodSeconds }}
+            failureThreshold: {{ .probes.readiness.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ .probes.liveness.httpGet.path }}
+              port: {{ .probes.liveness.httpGet.port }}
+            initialDelaySeconds: {{ .probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .probes.liveness.periodSeconds }}
+            failureThreshold: {{ .probes.liveness.failureThreshold }}
+---
+  {{- end }}
+{{- end }}

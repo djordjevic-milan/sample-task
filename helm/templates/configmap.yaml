@@ -1,0 +1,12 @@
+{{- range .Values.services }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $.Release.Name }}-{{ .name }}-config
+  namespace: {{ $.Release.Namespace }}
+data:
+  {{- range .env }}
+  {{ .name }}: {{ .value | quote }}
+  {{- end }}
+---
+{{- end }}
