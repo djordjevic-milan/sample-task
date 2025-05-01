@@ -65,18 +65,19 @@ services:
         value: "root"
       - key: DB_PASSWORD
         value: "pass123"
-    probes:
-      readiness:
-        httpGet:
-          path: /user
-          port: 3000
-        initialDelaySeconds: 5
-        periodSeconds: 10
-        failureThreshold: 3
-      liveness:
-        httpGet:
-          path: /user
-          port: 3000
-        initialDelaySeconds: 15
-        periodSeconds: 20
-        failureThreshold: 5
+    ## Disabled!!! Liveness probe is possible only when database is already inisialized, but at first start we have to initialaze DB from application.
+    # probes:
+    #   readiness:
+    #     httpGet:
+    #       path: /user
+    #       port: 3000
+    #     initialDelaySeconds: 5
+    #     periodSeconds: 10
+    #     failureThreshold: 3
+    #   liveness:
+    #     httpGet:
+    #       path: /user
+    #       port: 3000
+    #     initialDelaySeconds: 15
+    #     periodSeconds: 20
+    #     failureThreshold: 5

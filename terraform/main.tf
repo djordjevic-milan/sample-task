@@ -5,12 +5,10 @@ resource "virtualbox_vm" "node" {
   image     = "./images/focal-server-cloudimg-amd64-vagrant.box"
   cpus      = 2
   memory    = "2.0 gib"
-  # user_data = file("${path.module}/user_data/preinstall.sh")
-
 
   network_adapter {
       type = "bridged"
-      host_interface="wlp0s20f3"
+      host_interface="wlp0s20f3" # Check for your network interface
   }
 
   #Copy preinstall script to node

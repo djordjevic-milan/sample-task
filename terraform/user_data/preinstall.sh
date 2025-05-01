@@ -29,13 +29,20 @@ if [ "$HOSTNAME" = "master.local" ]; then
   echo "***[INFO] Hostname is master.local - proceeding with k3s server installation.***"
 
   # Install k3s
-  curl -sfL https://get.k3s.io | sh -
+  curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--flannel-backend=none --disable-network-policy" sh -
 
   # Taint master node
   sleep 120
   sudo k3s kubectl taint nodes master.local node-role.kubernetes.io/control-plane=:NoSchedule
 
-  # Define vars
+  # Install calico for netrwork policy
+  sudo k3s kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+
+  # Install ArgoCD
+  sudo k3s kubectl create namespace argocd
+  sudo k3s kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+  # Define vars for export
   TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
   WORKER_SCRIPT="/home/vagrant/connect_workers.sh"
   IP_ADDRESS=$(hostname -I | awk '{print $1}')
