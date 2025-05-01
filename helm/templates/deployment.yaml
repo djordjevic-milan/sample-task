@@ -21,21 +21,23 @@ spec:
           ports:
             - containerPort: {{ .port }}
           env:
-          {{- $serviceName := .name }}
-          {{- range .env }}
-          - name: {{ .name }}
-            valueFrom:
-              configMapKeyRef:
-                name: {{ $.Release.Name }}-{{ $serviceName }}-config
-                key: {{ .name }}
-          {{- end }}
-          {{- range .secret }}
-          - name: {{ .key }}
-            valueFrom:
-              secretKeyRef:
-                name: {{ $.Release.Name }}-{{ $serviceName }}-secret
-                key: {{ .key }}
-          {{- end }}
+            {{- $serviceName := .name }}
+            {{- range .env }}
+            - name: {{ .name }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $.Release.Name }}-{{ $serviceName }}-config
+                  key: {{ .name }}
+            {{- end }}
+            {{- range .secret }}
+            - name: {{ .key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Release.Name }}-{{ $serviceName }}-secret
+                  key: {{ .key }}
+            {{- end }}
+          {{- if .probes }}
+            {{- if .probes.readiness }}
           readinessProbe:
             httpGet:
               path: {{ .probes.readiness.httpGet.path }}
@@ -43,6 +45,8 @@ spec:
             initialDelaySeconds: {{ .probes.readiness.initialDelaySeconds }}
             periodSeconds: {{ .probes.readiness.periodSeconds }}
             failureThreshold: {{ .probes.readiness.failureThreshold }}
+            {{- end }}
+            {{- if .probes.liveness }}
           livenessProbe:
             httpGet:
               path: {{ .probes.liveness.httpGet.path }}
@@ -50,6 +54,8 @@ spec:
             initialDelaySeconds: {{ .probes.liveness.initialDelaySeconds }}
             periodSeconds: {{ .probes.liveness.periodSeconds }}
             failureThreshold: {{ .probes.liveness.failureThreshold }}
+            {{- end }}
+          {{- end }}
 ---
   {{- end }}
 {{- end }}

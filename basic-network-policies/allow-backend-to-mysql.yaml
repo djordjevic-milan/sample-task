@@ -6,17 +6,15 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: react-app-backend
-  policyTypes:
-    - Egress
-  egress:
-    - to:
-        - namespaceSelector:
+      app: mysql
+  ingress:
+    - from:
+        - podSelector:
             matchLabels:
-              kubernetes.io/metadata.name: react-app
-          podSelector:
-            matchLabels:
-              app: mysql
+              app: react-app-backend
       ports:
         - protocol: TCP
           port: 3306
+  policyTypes:
+    - Ingress
+
