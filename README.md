@@ -107,15 +107,15 @@ __Main.tf__
 As we already mention `main.tf` will start downloading image for virtual machines and provision it. After VM's are started terraform provisioner will
 first copy `/user_data/preinstall.sh` script to VM's. Then it will do the same for `./user_data/k3s-user-key.pub` key. Then in line 43 terraform provisioner will set the hostnames to VM's by reading values from list "node_names" form `locals.tf`. Then it will start `preinstall.sh` which will do the following:
 
-0. Check for hostname of virtual machine and if equal "master.local", it will continue with the process.
-1. Create k3s user, we mention already in this text
-2. Install k3s cluster without flannel
-3. Wait for 90s for cluster to be fully available
-4. Taint master node so no pods will be schedule on it
-5. Install calico which is mandatory for setting up network policies
-6. Install ArgoCD
-7. Create `connect_workers.sh` which will be exportet to `./user_data` directory and used bu null resource to connect nodes to master node.
-8. Create kube config file which will be provided to `./user_data` directory we can later use to access cluster locally. It will prepare file by changing localhost address with IP address of master node, so we can use it immediately.
+1. Check for hostname of virtual machine and if equal "master.local", it will continue with the process.
+2. Create k3s user, we mention already in this text
+3. Install k3s cluster without flannel
+4. Wait for 90s for cluster to be fully available
+5. Taint master node so no pods will be schedule on it
+6. Install calico which is mandatory for setting up network policies
+7. Install ArgoCD
+8. Create `connect_workers.sh` which will be exportet to `./user_data` directory and used bu null resource to connect nodes to master node.
+9. Create kube config file which will be provided to `./user_data` directory we can later use to access cluster locally. It will prepare file by changing localhost address with IP address of master node, so we can use it immediately.
 
 __connect_workers.tf__
 
@@ -173,7 +173,7 @@ echo 3 > /proc/sys/vm/drop_caches
 
 For application we are using app from following repository https://github.com/madhurajayashanka/docker-mysql-nodejs-reactjs-app
 
-This repo already provide us with Dockerfile's that are ready for build. Images for application are built manually with docker build command and pushed to github repo on this location. https://github.com/djordjevic-milan?tab=packages. Images are publicly available. Application is desined to run on localhost which will be important later on when we have to access backend. For that we will need to expose port 3000 on localhost. This was mentioned Prerequirements block, when we talk about Kubernetes client installation.
+This repo already provide us with Dockerfile's that are ready for build. Images for application are built manually with docker build command and pushed to github repo on this location. https://github.com/djordjevic-milan?tab=packages. Images are publicly available. Application is desined to run on localhost which will be important later on, when we have to access backend. For that we will need to expose port 3000 on localhost. This was mentioned "Prerequirements" block, when we talk about Kubernetes client installation.
 
 After k8s cluster is up we can check node status with `kubectl get nodes`
 
@@ -201,15 +201,76 @@ Now we can expose port for accessing locally to ArgoCD:
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
-Access ArgoCD on __localhost:8080__. 
-Username: admin Password:`argocd admin initial-password -n argocd`
+Access ArgoCD on localhost:8080 <br /> 
+Username: __admin__ Password: `argocd admin initial-password -n argocd` <br />
 
 If you want, change password with: `argocd account update-password`
 
-Now create pipeline in ArgoCD and sync. First deploy database and then backend and frontend. Order is not mandatory but it will keed everything clean. For first deployment use auto-create namespace option. ArgoCD manifest files can be found in `./argocd/app-k8s`.
+Now create pipeline in ArgoCD and sync. First deploy database and then backend, frontend and ingress. Order is not mandatory, but it will keep everything clean. For first deployment use auto-create namespace option. ArgoCD manifest files can be found in `./argocd/app-k8s`.
+
+After deployment of application and ingress, add this entry `<one_of_nodesIP> react-app.local` to `/etc/hosts`. Example `192.168.10.179 react-app.local`. This will redirect trafic from react-app.local to our local machine. 
+
+react-app.local/static -> For frontend. Access app.
+
+react-app.local/user -> For backend user api.
+
+To avoid worning of unknown certificate, import certificate to OS and then to browser. For importing certificate to ubuntu use:
+
+```
+sudo cp ./k8s/ingress/react-app.crt /usr/local/share/ca-certificates/react-app.crt
+sudo update-ca-certificates
+```
+
+For importing to browser use browser specific option. For Chrome: `chrome://certificate-manager/localcerts/usercerts -> Click Import`
+
+> [!NOTE]
+> This self sign certificate is not created with CA. If we would use self signed certificat in specific organisation it's recommended to create CA for organisation as well. In our case this serves the purpose. Command: `openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout react-app.key -out react-app.crt -subj "/CN=react-app.local/O=react-app.local" -addext "subjectAltName = DNS:react-app.local"`.
+
+Now to test application expose backend port to localhost machine:
+
+```
+kubectl port-forward svc/backend -n react-app 3000:3000
+```
+
+Access frontend with "react-app.local/static". We can access backend API for user list on "react-app.local/user"
+
+## Basic network policies
+
+Basic network policies can be found in `basic-network-policies` directory. They are deployed with help of k8s manifests. For kubernetes deployment check `k8s` directory and for helm deployment check `helm` directory.
+
+### Code explanation
+
+Let's check policies for k8s deployment one by one:
+
+__deny-all-default.yaml__
+
+This one is default policy that deny all ingress traffic in `react-app` namespace
+
+__allow-backend-to-mysql.yaml__
+
+This policy will allow containers with label `app: backend` to access containers with label `app: mysql` on port 3306 in `react-app` namespace.
+
+__allow-frontend-to-backend.yaml__
+
+This policy will allow containers with label `app: frontend` to access containers with label `app: backend` on port 3000 in `react-app` namespace. 
+
+> [!NOTE]
+> This policy make sence in theory only, since FE accessing backend with exposed port on localhost.
+
+__allow-ingress-to-frontend.yaml__
+
+This policy will allow Treafik ingress with annotation `kubernetes.io/metadata.name: kube-system` to access containers with label `app: frontend` on port 3000 in `react-app` namespace, effectively allowing us to access application with "react-app.local/static" URL.
+
+__allow-user-api.yaml__
+
+This policy will allow Treafik ingress with annotation `kubernetes.io/metadata.name: kube-system` to access containers with label `app: backend` on port 3000 in `react-app` namespace, effectively allowing us to access application with "react-app.local/user" URL.
+
 
 
 
 ## k8s
 
-This directory contains kubernetes manifests for application and database deployment.
+This directory contains kubernetes manifests for deployment of application and database. 
+
+## Helm
+

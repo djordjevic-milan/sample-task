@@ -1,0 +1,21 @@
+## This manifest make sence in theory only, since FE accessing backend with exposed port on localhost!
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: react-app
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 3000
+  policyTypes:
+    - Ingress
+

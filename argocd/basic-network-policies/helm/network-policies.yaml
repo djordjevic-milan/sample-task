@@ -1,0 +1,8 @@
+project: default
+source:
+  repoURL: https://github.com/djordjevic-milan/sample-task.git
+  path: basic-network-policies
+  targetRevision: HEAD
+destination:
+  server: https://kubernetes.default.svc
+  namespace: react-app
