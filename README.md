@@ -370,4 +370,19 @@ This manifest will deploy tls secret which will be used by ingress to establish 
 > [!NOTE]
 > Because ingress is a part of helm deployment as well, we can find `./helm/ssl` directory. There we have only certificates and `secret-tls.yaml` which we have to deploy manually, or via ArgoCD in order for helm deployment ingress to work.
 
+> [!INFO]
+> Templates are created manually just for application and ingress. DB, network policies and ingress tls secret needs to be deployed via k8s manifests.
+
 In order for helm deployment to work __release name must be `react-app`__. Because of different app name, basic network policies are also different.
+
+Now we can deploy app with ArgoCD or `helm upgrade --install react-app . -f values.yaml -n react-app`
+
+Let's check custom templates quickly:
+
+***configMap.yaml***
+
+This template will iterate over `Values.services.env` and create config maps dependinf on number of services (backend, frontend) and quote it's value.
+
+***ingress.yaml***
+
+This template will check if ingress is enabled, `{{- if .Values.ingress.enabled }}` and if true 
