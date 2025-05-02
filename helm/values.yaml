@@ -21,8 +21,6 @@ services:
     enabled: true
     replicas: 1
     image: ghcr.io/djordjevic-milan/userlist-frontend:latest
-    port: 3001
-    targetPort: 3000
     env:
       - name: API_URL
         value: "http://api:3000"
@@ -51,8 +49,6 @@ services:
     enabled: true
     replicas: 1
     image: ghcr.io/djordjevic-milan/userlist-backend:latest
-    port: 3000
-    targetPort: 3000
     env:
       - name: DB_HOST
         value: "mysql"

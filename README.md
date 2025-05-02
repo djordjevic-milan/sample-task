@@ -106,7 +106,7 @@ After everything is done we sould get prepared cluster with ArgoCD deployed and 
 > [!NOTE]
 > For all provisioner conections we will use vagrant private key to access the nodes.
 
-__Main.tf__
+***main.tf***
 
 As we already mention `main.tf` will start downloading image for virtual machines and provision it. After VM's are started terraform provisioner will
 first copy `/user_data/preinstall.sh` script to VM's. Then it will do the same for `./user_data/k3s-user-key.pub` key. Then in line 43 terraform provisioner will set the hostnames to VM's by reading values from list "node_names" form `locals.tf`. Then it will start `preinstall.sh` which will do the following:
@@ -121,15 +121,15 @@ first copy `/user_data/preinstall.sh` script to VM's. Then it will do the same f
 8. Create `connect_workers.sh` which will be exportet to `./user_data` directory and used bu null resource to connect nodes to master node.
 9. Create kube config file which will be provided to `./user_data` directory we can later use to access cluster locally. It will prepare file by changing localhost address with IP address of master node, so we can use it immediately.
 
-__connect_workers.tf__
+***connect_workers.tf***
 
 `connect_workers.tf` create null resource dependent on "virtualbox_vm.node" and another null resource "connect_workers_script". This means that it will wait for all nodes and "connect_workers_script" resouce to be ready before start with creation. This provisioner will just run "connect_workers.sh" on worker nodes to connect k8s workers to cluster.
 
-__outputs.tf__
+***outputs.tf***
 
 "connect_workers_script" null resource will copy "connect_workers.sh" and kube config to `./user_data` directory. Later on we can use kube configuration to access the cluster. "connect_workers.sh" will be used to connect worker nodes to cluster.
 
-__If we don't have any other configuration__ we can simply copy kube config file to ~/.kube/config. __Otherwise it can overwrite existing configuration.__. In that case update your kube config with configuration new cluster. 
+__If we don't have any other configuration__ we can simply copy kube config file to ~/.kube/config. __Otherwise it can overwrite existing configuration.__ In that case update your kube config with configuration new cluster. 
 
 ```
 # If no existing configuration
@@ -138,11 +138,11 @@ cp ./user_data/k3s-config.yaml ~/.kube/config
 
 Also it will output node IP's so we don't need to search for it later on.
 
-__locals.tf__
+***locals.tf***
 
 Define node names with rule that master node must be at the first palce. Also it will declare worker index excluding master, which is in our case 2. By adding or removing the names in "node_names" list, we can determen number of nodes that will be provisioned. This is defined in line 3 of `main.tf`.
 
-__providers.tf__
+***providers.tf***
 
 Use latest Virtualbox provider.
 
@@ -206,7 +206,8 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
 Access ArgoCD on localhost:8080 <br /> 
-Username: __admin__ Password: `argocd admin initial-password -n argocd` <br />
+Username: __admin__ <br /> 
+Password: `argocd admin initial-password -n argocd` <br />
 
 If you want, change password with: `argocd account update-password`
 
@@ -238,6 +239,8 @@ kubectl port-forward svc/backend -n react-app 3000:3000
 
 Access frontend with "react-app.local/static". We can access backend API for user list on "react-app.local/user"
 
+In order for application to work, first click "DB Init" and then "Table Init". After that you can submit string which will be saved in mysql DB.
+
 ## Basic network policies
 
 Basic network policies can be found in `basic-network-policies` directory. They are deployed with help of k8s manifests. For kubernetes deployment check `k8s` directory and for helm deployment check `helm` directory.
@@ -248,26 +251,26 @@ Basic network policies can be deployed with ArgoCD. Manifest for ArgoCD is at `.
 
 Let's check policies for k8s deployment one by one:
 
-__deny-all-default.yaml__
+***deny-all-default.yaml***
 
 This one is default policy that deny all ingress traffic in `react-app` namespace
 
-__allow-backend-to-mysql.yaml__
+***allow-backend-to-mysql.yaml***
 
 This policy will allow containers with label `app: backend` to access containers with label `app: mysql` on port 3306 in `react-app` namespace.
 
-__allow-frontend-to-backend.yaml__
+***allow-frontend-to-backend.yaml***
 
 This policy will allow containers with label `app: frontend` to access containers with label `app: backend` on port 3000 in `react-app` namespace. 
 
 > [!NOTE]
 > This policy make sence in theory only, since FE accessing backend with exposed port on localhost.
 
-__allow-ingress-to-frontend.yaml__
+***allow-ingress-to-frontend.yaml***
 
 This policy will allow Treafik ingress with annotation `kubernetes.io/metadata.name: kube-system` to access containers with label `app: frontend` on port 3000 in `react-app` namespace, effectively allowing us to access application with "react-app.local/static" URL.
 
-__allow-user-api.yaml__
+***allow-user-api.yaml***
 
 This policy will allow Treafik ingress with annotation `kubernetes.io/metadata.name: kube-system` to access containers with label `app: backend` on port 3000 in `react-app` namespace, effectively allowing us to access application with "react-app.local/user" URL.
 
@@ -280,23 +283,91 @@ This policy will allow Treafik ingress with annotation `kubernetes.io/metadata.n
 
 ### Backend
 
-For backend we have five manifests: configMap.yaml, secrets.yaml, service.yaml and deployment.yaml. Let's check every manifest one by one.
+For backend we have four manifests: configMap.yaml, secrets.yaml, service.yaml and deployment.yaml. Let's check every manifest one by one.
 
-__configMap.yaml__
+***configMap.yaml***
 
 This manifest will create `backend-config` as a config map with non sensitive data like DB_HOST, DB_NAME and DB_PORT. This variables will be later used in deployment to define environment variables for container.
 
-__secrets.yaml__
+***secrets.yaml***
 
 This manifest will create `backend-secret` as a secret that will be encoded with base64 when deployed in cluster. `stringData` parametar ensures automatic encoding by k8s.
 
-__service.yaml__
+***service.yaml***
 
 This manifest will create `backend` as a service that listen on same port which will be exposed in cluster (3000)
 
-__deployment.yaml__
+***deployment.yaml***
 
-This manifest will create `backend` deployment which will bring up container with one replica. If we want increase number of replicas we should update `replicas: 1` in line 7 and redeploy application. Container will have label `app: backend`. Image for the container is defined in line 18
+This manifest will create `backend` deployment which will bring up container with one replica. If we want increase number of replicas we should update `replicas: 1` in line 7 and redeploy application. Container will have label `app: backend`. Image for the container is defined in line 18. `env:` will create environment variables for container refering to config map or secret that are already created. Liveness of probe can work only if DB is already initialised, so on firs tun pod wont start. That's why it's commented out. This issue can be solved from application side by initialising DB automaticaly. Also we could run init container with command for initialisation, but that's is out of scope for this task.
+
+### Frontend
+
+For frontend we have three manifests: configMap.yaml, service.yaml and deployment.yaml itself. Let's check every manifest one by one, though configuration is very similar.
+
+***configMap.yaml***
+
+his manifest will create `frontend-config` as a config map with non sensitive data like API_URL, NODE_ENV and REQUESTED_API_URL. REQUESTED_API_URL is created to only fulfill task scope and does not have any purpose for this application.
+
+***service.yaml***
+
+This manifest will create `frontend` as a service that exposing port 3001 and forward it to container that listen on port 3000.
+
+***deployment.yaml***
+
+Same as for backend, but app name and labels are different. Liveness of container will be checked by accessing port 3000 on root path.
+
+### Database
+
+For database we have six manifests: configMap.yaml, mysql-svc-headless.yaml, pv.yaml, pvc.yaml, service.yaml and statefulset.yaml. Let's check every manifest one by one.
+
+***configMap.yaml***
+
+Config map will add MYSQL_INITDB_SKIP_TZINFO environment variable to database container which will, if removed, be able to reattach to existing volume. Otherwise container will crash and can be scheduled only in new volume which beats the purpose of persistent volume.
+
+***mysql-svc-headless.yaml***
+
+This manifest will create a hedless service which means that service won't have IP address. Pod will be accessed via app selector.
+
+***pv.yaml***
+
+This manifest will create persistent volume in k8s which will be 5GB. `storageClassName: ""` disables dynamic provisioning which means that must be bound to persistent volume claim manually. It will keep data on host machine (in our case one of the VM's) at location `/mnt/data/mysql`. `persistentVolumeReclaimPolicy: Retain` will ensure that when persistent volume claim is removed persistent volume will still be present until it's removed manually.
+
+***pvc.yaml***
+
+This manifest will create persistent volume claim in `react-app` namespace for persistent volume that is created.
+
+***secrets.yaml***
+
+This manifest will create secrets necessary for database. Since we use `data:` selector we have to encode secrets to base64 manually.
+
+***statefulset.yaml***
+
+This manifest will create one replica of statefulset deployment with a pod name `mysql-0`. Container will be labeled `app: mysql` and it will mount volume with a claim of `mysql-pvc`. Data will be accessible from within container at this path `/var/lib/mysql`. Environment variables for container will be declared in a same way as described for backend container. Commented part can be used to wipe out the data from PV and boot new database which can be initialised again as described previously. Basically it will add one more container to the pod which will be executed before mysql container and run defined commands on `/var/lib/mysql` volume mount path. Liveness and readness work same as already previously described for frontend container.
+
+### Ingress
+
+We use ingress to access application from outside. In our case everything is done locally, but it serves demonstration purpose. Also with ingress we are able to establish secure ssl connection and get rid of exposing port locally. Ofcourse we need to add entry to `/etc/hosts` as described already. When deploy ingress we also need to deploy `secret-tls.yaml`.
+
+***ingress.yaml***
+
+Ingress will listen for requests to "react-app.local" and route traffic to either the frontend or backend service based on the request path. Requests starting with `/static` will go to the frontend service on port 3001, and requests starting with `/user` will go to the backend service on port 3000.
+
+
+***secret-tls.yaml***
+
+This manifest will deploy tls secret which will be used by ingress to establish secure connection. Type of secret is defined by selector `type: kubernetes.io/tls` which indicates that this is a TLS secret used for SSL/TLS encryption.
+
+> [!NOTE]
+> ???
+
 
 ## Helm
 
+> [!WARNING]
+> Before deployment of helm charts it's recommended to remove k8s deployment first. Release names are different, but it's better to have nice clean deployment.
+
+> [!NOTE]
+> Because ingress is a part of helm deployment as well, we can find `./helm/ssl` directory. There we have only certificates and `secret-tls.yaml` which we have to deploy manually, or via ArgoCD in order for helm deployment ingress to work.
+
+In order for helm deployment to work __release name must be `react-app`__. Because of different app name, basic network policies are also different.

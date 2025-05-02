@@ -18,8 +18,6 @@ spec:
       containers:
         - name: {{ $.Release.Name }}-{{ .name }}
           image: {{ .image }}
-          ports:
-            - containerPort: {{ .port }}
           env:
             {{- $serviceName := .name }}
             {{- range .env }}
