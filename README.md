@@ -358,24 +358,20 @@ Ingress will listen for requests to "react-app.local" and route traffic to eithe
 
 This manifest will deploy tls secret which will be used by ingress to establish secure connection. Type of secret is defined by selector `type: kubernetes.io/tls` which indicates that this is a TLS secret used for SSL/TLS encryption.
 
-> [!NOTE]
-> ???
-
-
 ## Helm
 
 > [!WARNING]
 > Before deployment of helm charts it's recommended to remove k8s deployment first. Release names are different, but it's better to have nice clean deployment.
 
-> [!NOTE]
-> Because ingress is a part of helm deployment as well, we can find `./helm/ssl` directory. There we have only certificates and `secret-tls.yaml` which we have to deploy manually, or via ArgoCD in order for helm deployment ingress to work.
-
 > [!INFO]
-> Templates are created manually just for application and ingress. DB, network policies and ingress tls secret needs to be deployed via k8s manifests.
+> Templates are created manually just for application and ingress. DB and network policies and ingres needs to be deployed via k8s manifests.
 
 In order for helm deployment to work __release name must be `react-app`__. Because of different app name, basic network policies are also different.
 
 Now we can deploy app with ArgoCD or `helm upgrade --install react-app . -f values.yaml -n react-app`
+
+> [!WARNING]
+> From what I ca see, if we use ArgoCD to deploy helm charts, we cannot use CLI. https://github.com/argoproj/argo-cd/issues/1672. Also this thread confirms that `helm list -namespace some-namespace` don't show releases https://github.com/argoproj/argo-cd/discussions/7759. Unfortunately I did not do more research on how to overcome this issue.
 
 Let's check custom templates quickly:
 
@@ -385,4 +381,23 @@ This template will iterate over `Values.services.env` and create config maps dep
 
 ***ingress.yaml***
 
-This template will check if ingress is enabled, `{{- if .Values.ingress.enabled }}` and if true 
+This template will check if ingress is enabled, `{{- if .Values.ingress.enabled }}` and if true it will then check is tls secret exist `{{- if .Values.ingress.tls }}`. If so it will create ingress that will refer to that secret. If false it will simply create ingress without secret. eventualy it will iterate over paths `{{- range .Values.ingress.paths }}` and will generate all existing paths services and ports.
+
+***secret.yaml***
+
+This template will simply iterate over `Values.services.secret` and create k8s secrets with sufix "-secret" as a secret name. Also it will encode all strings to base64
+
+***services.yaml***
+
+Similar as for secrets but it will just create services/
+
+***tls-secret***
+
+Will check `.Values.ingress.tls` block and create tls secret for ingress.
+
+***deployment.yaml***
+
+This template will iterate over `.Values.services" and check for all services that exist in `values.yaml`. If enabled is true it will create manifest in a following way. First will generate name for pod by taking release name, from helm command that is passed during deployment (in our case react-app), and adding name of service (backend or frontend in our case). Then it will generate namespace from commant that is passed during deployment (react-app in our case). It will do the same for labels and containers. Then it will take image from `.Values.services.images`. Now because we use another loop to iterate over "env:" we have to declare temporary variable for helm template `{{- $serviceName := .name }}` in order to use it in that loop. Then we rever to this variable when createing secret and config map. Next we check if probes exist. If so we check if readness exist and if true we create readness. Same is for liveness probe.
+
+This is in short how templates works
+
