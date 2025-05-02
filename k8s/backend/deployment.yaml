@@ -43,7 +43,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: backend-secret
-                  key: 
+                  key: DB_PASSWORD
           ## Disabled!!! Liveness probe is possible only when database is already inisialized, but at first start we have to initialaze DB manually from application.
           # readinessProbe:
           #   httpGet:
