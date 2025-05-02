@@ -1,0 +1,8 @@
+project: default
+source:
+  repoURL: https://github.com/djordjevic-milan/sample-task.git
+  path: k8s/backend
+  targetRevision: HEAD
+destination:
+  server: https://kubernetes.default.svc
+  namespace: react-app

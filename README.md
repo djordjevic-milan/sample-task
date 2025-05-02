@@ -34,6 +34,7 @@ sudo apt-get install terraform
 ```
 3. Install Kubernetes client https://ubuntu.com/kubernetes/install. Even though we will use ArgoCD for deployment we still need kubectl later on for port forwarding and easier troubleshooting.
 4. Install Git https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+5. ArgoCD cli https://argo-cd.readthedocs.io/en/stable/cli_installation/
 
 We should be ready now. Let's start!
 
@@ -148,7 +149,7 @@ Known error during provisioning is:
 Error: [ERROR] Clone *.vdi and *.vmdk to VM folder: exit status 1
 ```
 
-This is most probobly specific to focal image that creates two disks which virtual box sometimes do not handel very well. 
+This is most probobly specific to focal image that creates two disks which virtual box sometimes dont' handle very well. 
 https://github.com/terra-farm/terraform-provider-virtualbox/issues/33
 
 > [!TIP]
@@ -170,8 +171,45 @@ echo 3 > /proc/sys/vm/drop_caches
 ```
 ## Application
 
+For application we are using app from following repository https://github.com/madhurajayashanka/docker-mysql-nodejs-reactjs-app
+
+This repo already provide us with Dockerfile's that are ready for build. Images for application are built manually with docker build command and pushed to github repo on this location. https://github.com/djordjevic-milan?tab=packages. Images are publicly available. Application is desined to run on localhost which will be important later on when we have to access backend. For that we will need to expose port 3000 on localhost. This was mentioned Prerequirements block, when we talk about Kubernetes client installation.
+
+After k8s cluster is up we can check node status with `kubectl get nodes`
+
+```
+Apply complete! Resources: 7 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+node_ips = {
+  "master" = "192.168.10.179"
+  "worker1" = "192.168.10.178"
+  "worker2" = "192.168.10.177"
+}
+milan@milan-port:~/Downloads/sample-task/terraform$ cp ./user_data/k3s-config.yaml ~/.kube/config
+milan@milan-port:~/Downloads/sample-task/terraform$ k get nodes
+NAME            STATUS   ROLES                  AGE     VERSION
+master.local    Ready    control-plane,master   10m     v1.32.3+k3s1
+worker1.local   Ready    <none>                 7m42s   v1.32.3+k3s1
+worker2.local   Ready    <none>                 7m46s   v1.32.3+k3s1
+```
+
+Now we can expose port for accessing locally to ArgoCD:
+
+```
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+
+Access ArgoCD on __localhost:8080__. 
+Username: admin Password:`argocd admin initial-password -n argocd`
+
+If you want, change password with: `argocd account update-password`
+
+Now create pipeline in ArgoCD and sync. First deploy database and then backend and frontend. Order is not mandatory but it will keed everything clean. For first deployment use auto-create namespace option. ArgoCD manifest files can be found in `./argocd/app-k8s`.
+
 
 
 ## k8s
 
-This directory contains kubernetes manifests for application deployment
+This directory contains kubernetes manifests for application and database deployment.

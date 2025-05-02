@@ -43,19 +43,20 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: backend-secret
-                  key: DB_PASSWORD
-          readinessProbe:
-            httpGet:
-              path: /user
-              port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            failureThreshold: 3
-          livenessProbe:
-            httpGet:
-              path: /user
-              port: 3000
-            initialDelaySeconds: 15
-            periodSeconds: 20
-            failureThreshold: 5
+                  key: 
+          ## Disabled!!! Liveness probe is possible only when database is already inisialized, but at first start we have to initialaze DB manually from application.
+          # readinessProbe:
+          #   httpGet:
+          #     path: /user
+          #     port: 3000
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 10
+          #   failureThreshold: 3
+          # livenessProbe:
+          #   httpGet:
+          #     path: /user
+          #     port: 3000
+          #   initialDelaySeconds: 15
+          #   periodSeconds: 20
+          #   failureThreshold: 5
 
