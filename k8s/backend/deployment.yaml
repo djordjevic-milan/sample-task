@@ -16,8 +16,6 @@ spec:
       containers:
         - name: backend
           image: ghcr.io/djordjevic-milan/userlist-backend:latest
-          ports:
-            - containerPort: 3000
           env:
             - name: DB_HOST
               valueFrom:

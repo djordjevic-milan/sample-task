@@ -3,7 +3,11 @@
 > [!NOTE]
 > Deployment is tested on Ubuntu 24.04 LTS. Guide will follow setup on this OS. This setup will work fine on 16GB of RAM hardware.
 
-For local deployment of k8s cluster and application first we need to setup environment.
+For local deployment of k8s cluster and application first we need to setup environment. Repository contains two separate deployment for application. One is k8s and another is helm deployment. 
+
+For network policies we have separated k8s manifests.
+
+Database is only k8s deployment.
 
 ## Prerequirements
 
@@ -238,6 +242,8 @@ Access frontend with "react-app.local/static". We can access backend API for use
 
 Basic network policies can be found in `basic-network-policies` directory. They are deployed with help of k8s manifests. For kubernetes deployment check `k8s` directory and for helm deployment check `helm` directory.
 
+Basic network policies can be deployed with ArgoCD. Manifest for ArgoCD is at `./argocd/basic-network-policies/k8s`.
+
 ### Code explanation
 
 Let's check policies for k8s deployment one by one:
@@ -265,12 +271,32 @@ __allow-user-api.yaml__
 
 This policy will allow Treafik ingress with annotation `kubernetes.io/metadata.name: kube-system` to access containers with label `app: backend` on port 3000 in `react-app` namespace, effectively allowing us to access application with "react-app.local/user" URL.
 
+> [!NOTE]
+> For Helm deployment rules are the same. Only difference is application name for frontend and backend.
 
+## Kubernetes
 
+`k8s` directory contains kubernetes manifests for deployment of application, database and ingress. Since we already deployed application and ingress as kubernetes deployment, let's talk about manifest files.
 
-## k8s
+### Backend
 
-This directory contains kubernetes manifests for deployment of application and database. 
+For backend we have five manifests: configMap.yaml, secrets.yaml, service.yaml and deployment.yaml. Let's check every manifest one by one.
+
+__configMap.yaml__
+
+This manifest will create `backend-config` as a config map with non sensitive data like DB_HOST, DB_NAME and DB_PORT. This variables will be later used in deployment to define environment variables for container.
+
+__secrets.yaml__
+
+This manifest will create `backend-secret` as a secret that will be encoded with base64 when deployed in cluster. `stringData` parametar ensures automatic encoding by k8s.
+
+__service.yaml__
+
+This manifest will create `backend` as a service that listen on same port which will be exposed in cluster (3000)
+
+__deployment.yaml__
+
+This manifest will create `backend` deployment which will bring up container with one replica. If we want increase number of replicas we should update `replicas: 1` in line 7 and redeploy application. Container will have label `app: backend`. Image for the container is defined in line 18
 
 ## Helm
 
