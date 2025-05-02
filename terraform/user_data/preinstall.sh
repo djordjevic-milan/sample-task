@@ -13,7 +13,7 @@ chmod 700 /home/$USER/.ssh
 chown $USER:$USER /home/$USER/.ssh
 
 ## Add k3s pub key
-cat /tmp/ubuntu-key.pub >> /home/$USER/.ssh/authorized_keys
+cat /tmp/k3s-user-key.pub >> /home/$USER/.ssh/authorized_keys
 chmod 600 /home/$USER/.ssh/authorized_keys
 chown $USER:$USER /home/$USER/.ssh/authorized_keys
 
@@ -32,7 +32,7 @@ if [ "$HOSTNAME" = "master.local" ]; then
   curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--flannel-backend=none --disable-network-policy" sh -
 
   # Taint master node
-  sleep 120
+  sleep 90
   sudo k3s kubectl taint nodes master.local node-role.kubernetes.io/control-plane=:NoSchedule
 
   # Install calico for netrwork policy

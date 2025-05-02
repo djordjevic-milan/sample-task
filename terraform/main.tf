@@ -1,8 +1,8 @@
 resource "virtualbox_vm" "node" {
   count     = length(local.node_names)
   name      = local.node_names[count.index]
-  # image     = "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-vagrant.box"
-  image     = "./images/focal-server-cloudimg-amd64-vagrant.box"
+  image     = "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-vagrant.box"
+  # image     = "./images/focal-server-cloudimg-amd64-vagrant.box"
   cpus      = 2
   memory    = "2.0 gib"
 
@@ -26,8 +26,8 @@ resource "virtualbox_vm" "node" {
 
   # Copy ubuntu public key to node
   provisioner "file" {
-    source = "./user_data/ubuntu-key.pub"
-    destination = "/tmp/ubuntu-key.pub"
+    source = "./user_data/k3s-user-key.pub"
+    destination = "/tmp/k3s-user-key.pub"
 
     connection {
       type        = "ssh"

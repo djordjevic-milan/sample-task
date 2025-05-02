@@ -1,3 +1,4 @@
+## This manifest make sence in theory only, since FE accessing backend with exposed port on localhost!
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
