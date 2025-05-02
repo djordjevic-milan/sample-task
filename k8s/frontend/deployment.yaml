@@ -16,8 +16,6 @@ spec:
       containers:
         - name: frontend
           image: ghcr.io/djordjevic-milan/userlist-frontend:latest
-          ports:
-            - containerPort: 3000
           env:
             - name: API_URL
               valueFrom:
