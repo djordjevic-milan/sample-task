@@ -363,7 +363,7 @@ This manifest will deploy tls secret which will be used by ingress to establish 
 > [!WARNING]
 > Before deployment of helm charts it's recommended to remove k8s deployment first. Release names are different, but it's better to have nice clean deployment.
 
-> [!INFO]
+> [!NOTE]
 > Templates are created manually just for application and ingress. DB and network policies and ingres needs to be deployed via k8s manifests.
 
 In order for helm deployment to work __release name must be `react-app`__. Because of different app name, basic network policies are also different.
@@ -371,7 +371,7 @@ In order for helm deployment to work __release name must be `react-app`__. Becau
 Now we can deploy app with ArgoCD or `helm upgrade --install react-app . -f values.yaml -n react-app`
 
 > [!WARNING]
-> From what I ca see, if we use ArgoCD to deploy helm charts, we cannot use CLI. https://github.com/argoproj/argo-cd/issues/1672. Also this thread confirms that `helm list -namespace some-namespace` don't show releases https://github.com/argoproj/argo-cd/discussions/7759. Unfortunately I did not do more research on how to overcome this issue.
+> From what I can see, if we use ArgoCD to deploy helm charts, we cannot use CLI. https://github.com/argoproj/argo-cd/issues/1672. Also this thread confirms that `helm list -namespace some-namespace` don't show releases https://github.com/argoproj/argo-cd/discussions/7759. Unfortunately I did not do more research on how to overcome this issue.
 
 Let's check custom templates quickly:
 
@@ -397,7 +397,7 @@ Will check `.Values.ingress.tls` block and create tls secret for ingress.
 
 ***deployment.yaml***
 
-This template will iterate over `.Values.services" and check for all services that exist in `values.yaml`. If enabled is true it will create manifest in a following way. First will generate name for pod by taking release name, from helm command that is passed during deployment (in our case react-app), and adding name of service (backend or frontend in our case). Then it will generate namespace from commant that is passed during deployment (react-app in our case). It will do the same for labels and containers. Then it will take image from `.Values.services.images`. Now because we use another loop to iterate over "env:" we have to declare temporary variable for helm template `{{- $serviceName := .name }}` in order to use it in that loop. Then we rever to this variable when createing secret and config map. Next we check if probes exist. If so we check if readness exist and if true we create readness. Same is for liveness probe.
+This template will iterate over `.Values.services"` and check for all services that exist in `values.yaml`. If enabled is true it will create manifest in a following way. First will generate name for pod by taking release name, from helm command that is passed during deployment (in our case react-app), and adding name of service (backend or frontend in our case). Then it will generate namespace from commant that is passed during deployment (react-app in our case). It will do the same for labels and containers. Then it will take image from `.Values.services.images`. Now because we use another loop to iterate over "env:" we have to declare temporary variable for helm template `{{- $serviceName := .name }}` in order to use it in that loop. Then we rever to this variable when createing secret and config map. Next we check if probes exist. If so we check if readness exist and if true we create readness. Same is for liveness probe.
 
 This is in short how templates works
 
