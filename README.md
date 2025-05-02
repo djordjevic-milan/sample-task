@@ -118,7 +118,28 @@ first copy `/user_data/preinstall.sh` script to VM's. Then it will do the same f
 
 __connect_workers.tf__
 
-`connect_workers.tf` create null resource dependent on "virtualbox_vm.node" and another null resource "connect_workers_script". This means that it will wait for all nodes to be ready and connect_workers_script to be created before starting. This provisioner will just run "connect_workers.sh" on worker nodes to connect 
+`connect_workers.tf` create null resource dependent on "virtualbox_vm.node" and another null resource "connect_workers_script". This means that it will wait for all nodes and "connect_workers_script" resouce to be ready before start with creation. This provisioner will just run "connect_workers.sh" on worker nodes to connect k8s workers to cluster.
+
+__outputs.tf__
+
+"connect_workers_script" null resource will copy "connect_workers.sh" and kube config to `./user_data` directory. Later on we can use kube configuration to access the cluster. "connect_workers.sh" will be used to connect worker nodes to cluster.
+
+__If we don't have any other configuration__ we can simply copy kube config file to ~/.kube/config. __Otherwise it can overwrite existing configuration.__. In that case update your kube config with configuration new cluster. 
+
+```
+# If no existing configuration
+cp ./user_data/k3s-config.yaml ~/.kube/config
+```
+
+Also it will output node IP's so we don't need to search for it later on.
+
+__locals.tf__
+
+Define node names with rule that master node must be at the first palce. Also it will declare worker index excluding master, which is in our case 2. By adding or removing the names in "node_names" list, we can determen number of nodes that will be provisioned. This is defined in line 3 of `main.tf`.
+
+__providers.tf__
+
+Use latest Virtualbox provider.
 
 ### Troubleshooting
 
@@ -147,3 +168,10 @@ Also might be useful to drop cache for VM.
 sudo su
 echo 3 > /proc/sys/vm/drop_caches
 ```
+## Application
+
+
+
+## k8s
+
+This directory contains kubernetes manifests for application deployment
