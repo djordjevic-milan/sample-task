@@ -9,6 +9,9 @@ For network policies we have separated k8s manifests.
 
 Database is only k8s deployment.
 
+> [!NOTE]
+> One more note before we start. We are keep secrets and keys in plain text on public repo. In proper environment we will use some kind of secret manager for this purpose. 
+
 ## Prerequirements
 
 1. Install Virtualbox https://www.virtualbox.org/wiki/Linux_Downloads
@@ -44,14 +47,14 @@ We should be ready now. Let's start!
 
 ## Infrastructure - Terraform
 
-Clone repository to your local machine
+Clone repository to your local machine:
 
 ```
 git clone https://github.com/djordjevic-milan/sample-task.git
 cd sample-task
 ```
 
-Go to terrafrom directory and run terraform init
+Go to terrafrom directory and run terraform init:
 
 ```
 cd terraform
@@ -153,7 +156,7 @@ Known error during provisioning is:
 Error: [ERROR] Clone *.vdi and *.vmdk to VM folder: exit status 1
 ```
 
-This is most probobly specific to focal image that creates two disks which virtual box sometimes dont' handle very well. 
+This is most probobly specific to focal image that creates two disks which virtual box in some cases do not handle very well. 
 https://github.com/terra-farm/terraform-provider-virtualbox/issues/33
 
 > [!TIP]
@@ -215,9 +218,9 @@ Now create pipeline in ArgoCD and sync. First deploy database and then backend, 
 
 After deployment of application and ingress, add this entry `<one_of_nodesIP> react-app.local` to `/etc/hosts`. Example `192.168.10.179 react-app.local`. This will redirect trafic from react-app.local to our local machine. 
 
-react-app.local/static -> For frontend. Access app.
+**react-app.local/static** -> For frontend. Access app.
 
-react-app.local/user -> For backend user api.
+**react-app.local/user** -> For backend user api.
 
 To avoid worning of unknown certificate, import certificate to OS and then to browser. For importing certificate to ubuntu use:
 
@@ -364,9 +367,12 @@ This manifest will deploy tls secret which will be used by ingress to establish 
 > Before deployment of helm charts it's recommended to remove k8s deployment first. Release names are different, but it's better to have nice clean deployment.
 
 > [!NOTE]
-> Templates are created manually just for application and ingress. DB and network policies and ingres needs to be deployed via k8s manifests.
+> Custom helm templates are created manually just for application and ingress. DB and network policies needs to be deployed via k8s manifests.
 
-In order for helm deployment to work __release name must be `react-app`__. Because of different app name, basic network policies are also different.
+In order for basic network policies to work __release name must be `react-app`__, otherwise we should adapt k8s manifest for policies. 
+
+> [!TIP]
+> This can be solved by adding one more label to pods dedicated for network polices. In that case we have to update Helm chart. Also we can include network policeis into helm chart and deploy it with application. Combination of this two solutions is the best option for solving this issue.
 
 Now we can deploy app with ArgoCD or `helm upgrade --install react-app . -f values.yaml -n react-app`
 
@@ -399,5 +405,4 @@ Will check `.Values.ingress.tls` block and create tls secret for ingress.
 
 This template will iterate over `.Values.services"` and check for all services that exist in `values.yaml`. If enabled is true it will create manifest in a following way. First will generate name for pod by taking release name, from helm command that is passed during deployment (in our case react-app), and adding name of service (backend or frontend in our case). Then it will generate namespace from commant that is passed during deployment (react-app in our case). It will do the same for labels and containers. Then it will take image from `.Values.services.images`. Now because we use another loop to iterate over "env:" we have to declare temporary variable for helm template `{{- $serviceName := .name }}` in order to use it in that loop. Then we rever to this variable when createing secret and config map. Next we check if probes exist. If so we check if readness exist and if true we create readness. Same is for liveness probe.
 
-This is in short how templates works
-
+This is in short how templates works.

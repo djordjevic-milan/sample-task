@@ -1,19 +1,19 @@
 resource "virtualbox_vm" "node" {
-  count     = length(local.node_names)
-  name      = local.node_names[count.index]
-  image     = "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-vagrant.box"
+  count = length(local.node_names)
+  name  = local.node_names[count.index]
+  image = "https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64-vagrant.box"
   # image     = "./images/focal-server-cloudimg-amd64-vagrant.box"
-  cpus      = 2
-  memory    = "2.0 gib"
+  cpus   = 2
+  memory = "2.0 gib"
 
   network_adapter {
-      type = "bridged"
-      host_interface="wlp0s20f3" # Check for your network interface
+    type           = "bridged"
+    host_interface = "wlp0s20f3" # Check for your network interface
   }
 
   #Copy preinstall script to node
   provisioner "file" {
-    source = "./user_data/preinstall.sh"
+    source      = "./user_data/preinstall.sh"
     destination = "/tmp/preinstall.sh"
 
     connection {
@@ -26,7 +26,7 @@ resource "virtualbox_vm" "node" {
 
   # Copy ubuntu public key to node
   provisioner "file" {
-    source = "./user_data/k3s-user-key.pub"
+    source      = "./user_data/k3s-user-key.pub"
     destination = "/tmp/k3s-user-key.pub"
 
     connection {
