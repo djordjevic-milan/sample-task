@@ -22,16 +22,6 @@ spec:
                 configMapKeyRef:
                   name: frontend-config
                   key: API_URL
-            - name: NODE_ENV
-              valueFrom:
-                configMapKeyRef:
-                  name: frontend-config
-                  key: NODE_ENV
-            - name: REQUESTED_API_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: frontend-config
-                  key: REQUESTED_API_URL
           readinessProbe:
             httpGet:
               path: /

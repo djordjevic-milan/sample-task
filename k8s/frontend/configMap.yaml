@@ -4,6 +4,4 @@ metadata:
   name: frontend-config
   namespace: react-app
 data:
-  API_URL: "http://api:3000"
-  NODE_ENV: "production"
-  REQUESTED_API_URL: "http://backend:3000/api"
+  API_URL: "http://backend:3000/api"

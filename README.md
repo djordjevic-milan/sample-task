@@ -84,7 +84,7 @@ chmod 600 ./user_data/vagrant ./user_data/k3s-user-key
 ```
 
 > [!NOTE]
-> Creation of k3s user is purly for demonstration purpose, since our repo is also public and key is already compromised. Anyway we can create our on key par with `ssh-keygen` command and provide it in `./user_data` dir.
+> Creation of k3s user is purly for demonstration purpose, since our repo is also public and key is already compromised. Anyway we can create our own key pair with `ssh-keygen` command and provide it in `./user_data` dir.
 
 
 Now we can run terraform apply:
@@ -310,7 +310,7 @@ For frontend we have three manifests: configMap.yaml, service.yaml and deploymen
 
 ***configMap.yaml***
 
-his manifest will create `frontend-config` as a config map with non sensitive data like API_URL, NODE_ENV and REQUESTED_API_URL. REQUESTED_API_URL is created to only fulfill task scope and does not have any purpose for this application.
+This manifest will create `frontend-config` as a config map with non sensitive data like API_URL. API_URL is created to only fulfill task scope and does not have any purpose for this application. Because service and pod are in same namespace we do not need to define full path (http://backend.react-app.svc.cluster.local:3000/api)
 
 ***service.yaml***
 
