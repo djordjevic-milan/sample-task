@@ -1,8 +1,14 @@
-project: default
-source:
-  repoURL: https://github.com/djordjevic-milan/sample-task.git
-  path: k8s/backend
-  targetRevision: HEAD
-destination:
-  server: https://kubernetes.default.svc
-  namespace: react-app
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/djordjevic-milan/sample-task.git
+    path: k8s/backend
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: react-app
